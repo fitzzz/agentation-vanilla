@@ -56,6 +56,9 @@ textarea {
 
 .toolbar {
   position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -70,12 +73,12 @@ textarea {
   user-select: none;
 }
 
-.toolbar[data-position="bottom-right"] { right: 20px; bottom: 20px; }
-.toolbar[data-position="bottom-center"] { left: 50%; bottom: 20px; transform: translateX(-50%); }
-.toolbar[data-position="bottom-left"] { left: 20px; bottom: 20px; }
-.toolbar[data-position="top-right"] { right: 20px; top: 20px; }
-.toolbar[data-position="top-center"] { left: 50%; top: 20px; transform: translateX(-50%); }
-.toolbar[data-position="top-left"] { left: 20px; top: 20px; }
+.toolbar[data-position="bottom-right"] { inset: auto 20px 20px auto; transform: none; }
+.toolbar[data-position="bottom-center"] { inset: auto auto 20px 50%; transform: translateX(-50%); }
+.toolbar[data-position="bottom-left"] { inset: auto auto 20px 20px; transform: none; }
+.toolbar[data-position="top-right"] { inset: 20px 20px auto auto; transform: none; }
+.toolbar[data-position="top-center"] { inset: 20px auto auto 50%; transform: translateX(-50%); }
+.toolbar[data-position="top-left"] { inset: 20px auto auto 20px; transform: none; }
 
 .tool {
   width: 34px;

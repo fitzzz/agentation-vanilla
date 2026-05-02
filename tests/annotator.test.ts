@@ -51,6 +51,32 @@ describe("createAnnotator", () => {
     annotator.unmount();
   });
 
+  it("supports an explicit bottom-center toolbar position", () => {
+    const annotator = createAnnotator({ enabled: false, position: "bottom-center" }).mount();
+    const host = document.querySelector<HTMLElement>("[data-ui-annotator-host]")!;
+    const toolbar = host.shadowRoot!.querySelector<HTMLElement>(".toolbar")!;
+    expect(toolbar.dataset.position).toBe("bottom-center");
+    expect(toolbar.style.bottom).toBe("20px");
+    expect(toolbar.style.left).toBe("50%");
+    expect(toolbar.style.transform).toBe("translateX(-50%)");
+    annotator.unmount();
+  });
+
+  it("falls back to bottom-center for invalid toolbar positions", () => {
+    const annotator = createAnnotator({
+      enabled: false,
+      position: "middle-left" as never,
+    }).mount();
+    const host = document.querySelector<HTMLElement>("[data-ui-annotator-host]")!;
+    const toolbar = host.shadowRoot!.querySelector<HTMLElement>(".toolbar")!;
+    expect(toolbar.dataset.position).toBe("bottom-center");
+    expect(toolbar.style.bottom).toBe("20px");
+    expect(toolbar.style.left).toBe("50%");
+    expect(toolbar.style.transform).toBe("translateX(-50%)");
+    expect(toolbar.style.top).toBe("");
+    annotator.unmount();
+  });
+
   it("creates, edits, deletes, and clears annotations", () => {
     document.body.innerHTML = '<button id="target" aria-label="Save">Save</button>';
     const button = document.querySelector<HTMLButtonElement>("#target")!;

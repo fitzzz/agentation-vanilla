@@ -736,6 +736,9 @@ textarea {
 
 .toolbar {
   position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -750,12 +753,12 @@ textarea {
   user-select: none;
 }
 
-.toolbar[data-position="bottom-right"] { right: 20px; bottom: 20px; }
-.toolbar[data-position="bottom-center"] { left: 50%; bottom: 20px; transform: translateX(-50%); }
-.toolbar[data-position="bottom-left"] { left: 20px; bottom: 20px; }
-.toolbar[data-position="top-right"] { right: 20px; top: 20px; }
-.toolbar[data-position="top-center"] { left: 50%; top: 20px; transform: translateX(-50%); }
-.toolbar[data-position="top-left"] { left: 20px; top: 20px; }
+.toolbar[data-position="bottom-right"] { inset: auto 20px 20px auto; transform: none; }
+.toolbar[data-position="bottom-center"] { inset: auto auto 20px 50%; transform: translateX(-50%); }
+.toolbar[data-position="bottom-left"] { inset: auto auto 20px 20px; transform: none; }
+.toolbar[data-position="top-right"] { inset: 20px 20px auto auto; transform: none; }
+.toolbar[data-position="top-center"] { inset: 20px auto auto 50%; transform: translateX(-50%); }
+.toolbar[data-position="top-left"] { inset: 20px auto auto 20px; transform: none; }
 
 .tool {
   width: 34px;
@@ -1363,10 +1366,21 @@ textarea {
   // src/annotator.ts
   var DEFAULT_STORAGE_KEY = "ui-annotations";
   var DEFAULT_Z_INDEX = 2147483e3;
+  var POSITIONS = /* @__PURE__ */ new Set([
+    "bottom-center",
+    "top-center",
+    "bottom-right",
+    "bottom-left",
+    "top-right",
+    "top-left"
+  ]);
   var idCounter = 0;
   function createId() {
     idCounter += 1;
     return `ann_${Date.now().toString(36)}_${idCounter.toString(36)}`;
+  }
+  function normalizePosition(position) {
+    return POSITIONS.has(position) ? position : "bottom-center";
   }
   function cloneAnnotations(annotations) {
     return annotations.map((annotation) => ({
@@ -1522,7 +1536,7 @@ textarea {
       return markdown;
     }
     get position() {
-      return this.options.position || "bottom-center";
+      return normalizePosition(this.options.position);
     }
     get theme() {
       return this.options.theme || "system";

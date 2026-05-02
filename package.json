@@ -1,6 +1,6 @@
 {
   "name": "agentation-vanilla",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Framework-agnostic browser UI annotations for AI coding feedback",
   "license": "MIT",
   "type": "module",

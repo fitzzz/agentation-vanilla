@@ -148,3 +148,7 @@ npm run typecheck
 npm test
 npm run build
 ```
+
+## Vite Consumers
+
+When installing from a GitHub branch or commit, restart Vite after updating the dependency. If the old bundle still appears, clear `node_modules/.vite` in the consuming app so Vite rebuilds its optimized dependency cache.

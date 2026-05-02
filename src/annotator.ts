@@ -28,6 +28,14 @@ import type {
 
 const DEFAULT_STORAGE_KEY = "ui-annotations";
 const DEFAULT_Z_INDEX = 2147483000;
+const POSITIONS = new Set<AnnotatorPosition>([
+  "bottom-center",
+  "top-center",
+  "bottom-right",
+  "bottom-left",
+  "top-right",
+  "top-left",
+]);
 
 type Draft = ElementInspection & {
   key: string;
@@ -43,6 +51,12 @@ let idCounter = 0;
 function createId(): string {
   idCounter += 1;
   return `ann_${Date.now().toString(36)}_${idCounter.toString(36)}`;
+}
+
+function normalizePosition(position?: string): AnnotatorPosition {
+  return POSITIONS.has(position as AnnotatorPosition)
+    ? (position as AnnotatorPosition)
+    : "bottom-center";
 }
 
 function cloneAnnotations(annotations: Annotation[]): Annotation[] {
@@ -229,7 +243,7 @@ export class UIAnnotator implements Annotator {
   };
 
   private get position(): AnnotatorPosition {
-    return this.options.position || "bottom-center";
+    return normalizePosition(this.options.position);
   }
 
   private get theme(): AnnotatorTheme {
