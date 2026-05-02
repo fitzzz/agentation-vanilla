@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UI Annotator plain HTML example</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #f8fafc;
+        color: #172033;
+      }
+
+      main {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+
+      .panel {
+        border: 1px solid #d4d4d8;
+        border-radius: 8px;
+        background: white;
+        padding: 24px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 6px;
+        padding: 10px 14px;
+        background: #0f766e;
+        color: white;
+        font-weight: 700;
+      }
+
+      button.secondary {
+        background: #475569;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Plain HTML checkout</h1>
+      <section class="panel" data-testid="summary-card">
+        <h2>Order summary</h2>
+        <p>The subtotal, shipping estimate, and tax line are ready for annotation.</p>
+        <div class="actions">
+          <button id="checkout-button" aria-label="Continue to payment">Continue</button>
+          <button class="secondary">Save cart</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="../../dist/agentation-vanilla.global.js"></script>
+    <script>
+      window.AgentationVanilla.createAnnotator({
+        enabled: true,
+        storageKey: "plain-html-ui-annotations"
+      }).mount();
+    </script>
+  </body>
+</html>
