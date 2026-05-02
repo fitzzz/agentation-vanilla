@@ -27,9 +27,22 @@ function submitComposer(host: HTMLElement, text: string): void {
 describe("createAnnotator", () => {
   it("mounts and unmounts the shadow overlay", () => {
     const annotator = createAnnotator({ enabled: false }).mount();
-    expect(document.querySelector("[data-ui-annotator-host]")).toBeTruthy();
+    const host = document.querySelector<HTMLElement>("[data-ui-annotator-host]");
+    expect(host).toBeTruthy();
+    expect(host!.shadowRoot!.querySelector<HTMLElement>(".toolbar")!.dataset.position).toBe(
+      "bottom-center",
+    );
     annotator.unmount();
     expect(document.querySelector("[data-ui-annotator-host]")).toBeNull();
+  });
+
+  it("supports a top-center toolbar position", () => {
+    const annotator = createAnnotator({ enabled: false, position: "top-center" }).mount();
+    const host = document.querySelector<HTMLElement>("[data-ui-annotator-host]")!;
+    expect(host.shadowRoot!.querySelector<HTMLElement>(".toolbar")!.dataset.position).toBe(
+      "top-center",
+    );
+    annotator.unmount();
   });
 
   it("creates, edits, deletes, and clears annotations", () => {
@@ -73,6 +86,44 @@ describe("createAnnotator", () => {
 
     expect(handler).not.toHaveBeenCalled();
     expect(document.querySelector("[data-ui-annotator-host]")!.shadowRoot!.querySelector(".composer")).toBeTruthy();
+    annotator.unmount();
+  });
+
+  it("annotates links without activating navigation handlers", () => {
+    document.body.innerHTML =
+      '<a id="docs-link" href="/docs"><span>Read docs</span></a>';
+    const link = document.querySelector<HTMLAnchorElement>("#docs-link")!;
+    const label = link.querySelector<HTMLSpanElement>("span")!;
+    setRect(link, { left: 10, top: 20, right: 130, bottom: 50, width: 120, height: 30 });
+    setRect(label, { left: 20, top: 25, right: 100, bottom: 45, width: 80, height: 20 });
+
+    const pointerHandler = vi.fn();
+    const clickHandler = vi.fn();
+    link.addEventListener("pointerdown", pointerHandler);
+    link.addEventListener("click", clickHandler);
+
+    const annotator = createAnnotator({ enabled: true, copyToClipboard: false }).mount();
+    const pointerEvent = new MouseEvent("pointerdown", { bubbles: true, cancelable: true });
+    const pointerResult = label.dispatchEvent(pointerEvent);
+    const clickEvent = new MouseEvent("click", { bubbles: true, cancelable: true });
+    const clickResult = label.dispatchEvent(clickEvent);
+
+    expect(pointerResult).toBe(false);
+    expect(clickResult).toBe(false);
+    expect(pointerHandler).not.toHaveBeenCalled();
+    expect(clickHandler).not.toHaveBeenCalled();
+
+    const host = document.querySelector<HTMLElement>("[data-ui-annotator-host]")!;
+    expect(host.shadowRoot!.querySelector(".composer")).toBeTruthy();
+    submitComposer(host, "Change link label");
+
+    expect(annotator.getAnnotations()).toMatchObject([
+      {
+        selector: "#docs-link",
+        targetType: "element",
+        feedback: "Change link label",
+      },
+    ]);
     annotator.unmount();
   });
 

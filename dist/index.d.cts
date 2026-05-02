@@ -1,5 +1,5 @@
 type AnnotationTargetType = "element" | "text" | "area" | "multi";
-type AnnotatorPosition = "bottom-right" | "bottom-left" | "top-right" | "top-left";
+type AnnotatorPosition = "bottom-right" | "bottom-center" | "bottom-left" | "top-right" | "top-center" | "top-left";
 type AnnotatorTheme = "system" | "light" | "dark";
 type Rect = {
     x: number;

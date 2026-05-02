@@ -45,6 +45,17 @@ const MEANINGFUL_SELECTOR = [
   "[role]",
 ].join(",");
 
+const ACTIVATION_SELECTOR = [
+  "a[href]",
+  "button",
+  "input",
+  "select",
+  "textarea",
+  "[role='button']",
+  "[role='link']",
+  "[onclick]",
+].join(",");
+
 function stopPageEvent(event: Event): void {
   event.preventDefault();
   event.stopPropagation();
@@ -55,6 +66,14 @@ function isInsideOverlay(event: Event, host: HTMLElement | null): boolean {
   if (!host) return false;
   const path = event.composedPath();
   return path.includes(host);
+}
+
+function getActivationTarget(element: HTMLElement): HTMLElement | null {
+  return element.closest<HTMLElement>(ACTIVATION_SELECTOR);
+}
+
+function getAnnotationTarget(element: HTMLElement): HTMLElement {
+  return getActivationTarget(element) ?? element;
 }
 
 function viewportRectFromPoints(start: { x: number; y: number }, end: { x: number; y: number }): Rect {
@@ -102,10 +121,12 @@ export class DocumentEventController {
   mount(): void {
     if (this.mounted) return;
     this.mounted = true;
-    document.addEventListener("mousemove", this.handleMouseMove, true);
-    document.addEventListener("click", this.handleClick, true);
-    document.addEventListener("mousedown", this.handleMouseDown, true);
-    document.addEventListener("mouseup", this.handleMouseUp, true);
+    window.addEventListener("mousemove", this.handleMouseMove, true);
+    window.addEventListener("pointerdown", this.handlePointerDown, true);
+    window.addEventListener("mousedown", this.handleMouseDown, true);
+    window.addEventListener("mouseup", this.handleMouseUp, true);
+    window.addEventListener("click", this.handleClick, true);
+    window.addEventListener("auxclick", this.handleAuxClick, true);
     document.addEventListener("keydown", this.handleKeyDown, true);
     document.addEventListener("keyup", this.handleKeyUp, true);
     window.addEventListener("blur", this.handleBlur);
@@ -114,10 +135,12 @@ export class DocumentEventController {
   destroy(): void {
     if (!this.mounted) return;
     this.mounted = false;
-    document.removeEventListener("mousemove", this.handleMouseMove, true);
-    document.removeEventListener("click", this.handleClick, true);
-    document.removeEventListener("mousedown", this.handleMouseDown, true);
-    document.removeEventListener("mouseup", this.handleMouseUp, true);
+    window.removeEventListener("mousemove", this.handleMouseMove, true);
+    window.removeEventListener("pointerdown", this.handlePointerDown, true);
+    window.removeEventListener("mousedown", this.handleMouseDown, true);
+    window.removeEventListener("mouseup", this.handleMouseUp, true);
+    window.removeEventListener("click", this.handleClick, true);
+    window.removeEventListener("auxclick", this.handleAuxClick, true);
     document.removeEventListener("keydown", this.handleKeyDown, true);
     document.removeEventListener("keyup", this.handleKeyUp, true);
     window.removeEventListener("blur", this.handleBlur);
@@ -149,7 +172,7 @@ export class DocumentEventController {
       this.callbacks.onHoverClear();
       return;
     }
-    this.callbacks.onHover(element, event);
+    this.callbacks.onHover(getAnnotationTarget(element), event);
   };
 
   private handleClick = (event: MouseEvent): void => {
@@ -164,10 +187,11 @@ export class DocumentEventController {
 
     const element = asHTMLElement(event.target);
     if (!element) return;
+    const annotationTarget = getAnnotationTarget(element);
 
     if ((event.metaKey || event.ctrlKey) && event.shiftKey && !this.callbacks.hasComposer()) {
       stopPageEvent(event);
-      this.callbacks.onMultiClick(element, event);
+      this.callbacks.onMultiClick(annotationTarget, event);
       return;
     }
 
@@ -178,20 +202,49 @@ export class DocumentEventController {
     }
 
     stopPageEvent(event);
-    this.callbacks.onElementClick(element, event);
+    this.callbacks.onElementClick(annotationTarget, event);
+  };
+
+  private handlePointerDown = (event: PointerEvent): void => {
+    if (!this.callbacks.isEnabled()) return;
+    if (isInsideOverlay(event, this.callbacks.getOverlayHost())) return;
+
+    const target = asHTMLElement(event.target);
+    if (!target) return;
+
+    if (this.callbacks.hasComposer() || getActivationTarget(target)) {
+      stopPageEvent(event);
+    }
   };
 
   private handleMouseDown = (event: MouseEvent): void => {
-    if (!this.callbacks.isEnabled() || this.callbacks.hasComposer()) return;
+    if (!this.callbacks.isEnabled()) return;
     if (event.button !== 0) return;
     if (isInsideOverlay(event, this.callbacks.getOverlayHost())) return;
     const target = asHTMLElement(event.target);
-    if (!target || isTextSelectionTarget(target)) return;
+    if (!target) return;
+
+    if (this.callbacks.hasComposer()) {
+      stopPageEvent(event);
+      return;
+    }
+
+    if (getActivationTarget(target)) {
+      stopPageEvent(event);
+      return;
+    }
+
+    if (isTextSelectionTarget(target)) return;
+    stopPageEvent(event);
     this.mouseDown = { x: event.clientX, y: event.clientY, target };
   };
 
   private handleMouseUp = (event: MouseEvent): void => {
     if (!this.callbacks.isEnabled()) return;
+    if (this.callbacks.hasComposer() && !isInsideOverlay(event, this.callbacks.getOverlayHost())) {
+      stopPageEvent(event);
+      return;
+    }
     if (!this.mouseDown) return;
 
     if (this.dragging) {
@@ -204,6 +257,12 @@ export class DocumentEventController {
 
     this.mouseDown = null;
     this.dragging = false;
+  };
+
+  private handleAuxClick = (event: MouseEvent): void => {
+    if (!this.callbacks.isEnabled()) return;
+    if (isInsideOverlay(event, this.callbacks.getOverlayHost())) return;
+    stopPageEvent(event);
   };
 
   private handleKeyDown = (event: KeyboardEvent): void => {

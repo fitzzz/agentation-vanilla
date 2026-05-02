@@ -2,8 +2,10 @@ export type AnnotationTargetType = "element" | "text" | "area" | "multi";
 
 export type AnnotatorPosition =
   | "bottom-right"
+  | "bottom-center"
   | "bottom-left"
   | "top-right"
+  | "top-center"
   | "top-left";
 
 export type AnnotatorTheme = "system" | "light" | "dark";

@@ -8,7 +8,7 @@ It does not include MCP, webhooks, agent sync, or backend storage.
 
 ## Features
 
-- Floating bottom-right toolbar, with other corner positions supported.
+- Floating bottom-center toolbar by default, with top-center and corner positions supported.
 - Annotation mode toggle.
 - Element hover highlighting.
 - Click-to-annotate with selected text capture.
@@ -38,7 +38,7 @@ import { createAnnotator } from "agentation-vanilla";
 const annotator = createAnnotator({
   enabled: true,
   storageKey: "ui-annotations",
-  position: "bottom-right",
+  position: "bottom-center",
   theme: "system",
 });
 
@@ -113,7 +113,7 @@ type Annotation = {
 
 - `enabled`: start in annotation mode.
 - `storageKey`: localStorage key. Default: `ui-annotations`.
-- `position`: `bottom-right`, `bottom-left`, `top-right`, or `top-left`.
+- `position`: `bottom-center`, `top-center`, `bottom-right`, `bottom-left`, `top-right`, or `top-left`. Default: `bottom-center`.
 - `theme`: `system`, `light`, or `dark`.
 - `zIndex`: overlay z-index override.
 - `sessionId`: optional local grouping id.

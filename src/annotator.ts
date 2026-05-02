@@ -229,7 +229,7 @@ export class UIAnnotator implements Annotator {
   };
 
   private get position(): AnnotatorPosition {
-    return this.options.position || "bottom-right";
+    return this.options.position || "bottom-center";
   }
 
   private get theme(): AnnotatorTheme {

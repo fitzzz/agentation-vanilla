@@ -71,8 +71,10 @@ textarea {
 }
 
 .toolbar[data-position="bottom-right"] { right: 20px; bottom: 20px; }
+.toolbar[data-position="bottom-center"] { left: 50%; bottom: 20px; transform: translateX(-50%); }
 .toolbar[data-position="bottom-left"] { left: 20px; bottom: 20px; }
 .toolbar[data-position="top-right"] { right: 20px; top: 20px; }
+.toolbar[data-position="top-center"] { left: 50%; top: 20px; transform: translateX(-50%); }
 .toolbar[data-position="top-left"] { left: 20px; top: 20px; }
 
 .tool {

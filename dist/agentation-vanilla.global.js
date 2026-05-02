@@ -329,6 +329,16 @@ var AgentationVanilla = (() => {
     "main",
     "[role]"
   ].join(",");
+  var ACTIVATION_SELECTOR = [
+    "a[href]",
+    "button",
+    "input",
+    "select",
+    "textarea",
+    "[role='button']",
+    "[role='link']",
+    "[onclick]"
+  ].join(",");
   function stopPageEvent(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -338,6 +348,12 @@ var AgentationVanilla = (() => {
     if (!host) return false;
     const path = event.composedPath();
     return path.includes(host);
+  }
+  function getActivationTarget(element) {
+    return element.closest(ACTIVATION_SELECTOR);
+  }
+  function getAnnotationTarget(element) {
+    return getActivationTarget(element) ?? element;
   }
   function viewportRectFromPoints(start, end) {
     const left = Math.min(start.x, end.x);
@@ -400,7 +416,7 @@ var AgentationVanilla = (() => {
           this.callbacks.onHoverClear();
           return;
         }
-        this.callbacks.onHover(element, event);
+        this.callbacks.onHover(getAnnotationTarget(element), event);
       };
       this.handleClick = (event) => {
         if (!this.callbacks.isEnabled()) return;
@@ -412,9 +428,10 @@ var AgentationVanilla = (() => {
         }
         const element = asHTMLElement(event.target);
         if (!element) return;
+        const annotationTarget = getAnnotationTarget(element);
         if ((event.metaKey || event.ctrlKey) && event.shiftKey && !this.callbacks.hasComposer()) {
           stopPageEvent(event);
-          this.callbacks.onMultiClick(element, event);
+          this.callbacks.onMultiClick(annotationTarget, event);
           return;
         }
         if (this.callbacks.hasComposer()) {
@@ -423,18 +440,41 @@ var AgentationVanilla = (() => {
           return;
         }
         stopPageEvent(event);
-        this.callbacks.onElementClick(element, event);
+        this.callbacks.onElementClick(annotationTarget, event);
+      };
+      this.handlePointerDown = (event) => {
+        if (!this.callbacks.isEnabled()) return;
+        if (isInsideOverlay(event, this.callbacks.getOverlayHost())) return;
+        const target = asHTMLElement(event.target);
+        if (!target) return;
+        if (this.callbacks.hasComposer() || getActivationTarget(target)) {
+          stopPageEvent(event);
+        }
       };
       this.handleMouseDown = (event) => {
-        if (!this.callbacks.isEnabled() || this.callbacks.hasComposer()) return;
+        if (!this.callbacks.isEnabled()) return;
         if (event.button !== 0) return;
         if (isInsideOverlay(event, this.callbacks.getOverlayHost())) return;
         const target = asHTMLElement(event.target);
-        if (!target || isTextSelectionTarget(target)) return;
+        if (!target) return;
+        if (this.callbacks.hasComposer()) {
+          stopPageEvent(event);
+          return;
+        }
+        if (getActivationTarget(target)) {
+          stopPageEvent(event);
+          return;
+        }
+        if (isTextSelectionTarget(target)) return;
+        stopPageEvent(event);
         this.mouseDown = { x: event.clientX, y: event.clientY, target };
       };
       this.handleMouseUp = (event) => {
         if (!this.callbacks.isEnabled()) return;
+        if (this.callbacks.hasComposer() && !isInsideOverlay(event, this.callbacks.getOverlayHost())) {
+          stopPageEvent(event);
+          return;
+        }
         if (!this.mouseDown) return;
         if (this.dragging) {
           const rect = viewportRectFromPoints(this.mouseDown, { x: event.clientX, y: event.clientY });
@@ -445,6 +485,11 @@ var AgentationVanilla = (() => {
         }
         this.mouseDown = null;
         this.dragging = false;
+      };
+      this.handleAuxClick = (event) => {
+        if (!this.callbacks.isEnabled()) return;
+        if (isInsideOverlay(event, this.callbacks.getOverlayHost())) return;
+        stopPageEvent(event);
       };
       this.handleKeyDown = (event) => {
         if (!this.callbacks.isEnabled()) return;
@@ -472,10 +517,12 @@ var AgentationVanilla = (() => {
     mount() {
       if (this.mounted) return;
       this.mounted = true;
-      document.addEventListener("mousemove", this.handleMouseMove, true);
-      document.addEventListener("click", this.handleClick, true);
-      document.addEventListener("mousedown", this.handleMouseDown, true);
-      document.addEventListener("mouseup", this.handleMouseUp, true);
+      window.addEventListener("mousemove", this.handleMouseMove, true);
+      window.addEventListener("pointerdown", this.handlePointerDown, true);
+      window.addEventListener("mousedown", this.handleMouseDown, true);
+      window.addEventListener("mouseup", this.handleMouseUp, true);
+      window.addEventListener("click", this.handleClick, true);
+      window.addEventListener("auxclick", this.handleAuxClick, true);
       document.addEventListener("keydown", this.handleKeyDown, true);
       document.addEventListener("keyup", this.handleKeyUp, true);
       window.addEventListener("blur", this.handleBlur);
@@ -483,10 +530,12 @@ var AgentationVanilla = (() => {
     destroy() {
       if (!this.mounted) return;
       this.mounted = false;
-      document.removeEventListener("mousemove", this.handleMouseMove, true);
-      document.removeEventListener("click", this.handleClick, true);
-      document.removeEventListener("mousedown", this.handleMouseDown, true);
-      document.removeEventListener("mouseup", this.handleMouseUp, true);
+      window.removeEventListener("mousemove", this.handleMouseMove, true);
+      window.removeEventListener("pointerdown", this.handlePointerDown, true);
+      window.removeEventListener("mousedown", this.handleMouseDown, true);
+      window.removeEventListener("mouseup", this.handleMouseUp, true);
+      window.removeEventListener("click", this.handleClick, true);
+      window.removeEventListener("auxclick", this.handleAuxClick, true);
       document.removeEventListener("keydown", this.handleKeyDown, true);
       document.removeEventListener("keyup", this.handleKeyUp, true);
       window.removeEventListener("blur", this.handleBlur);
@@ -702,8 +751,10 @@ textarea {
 }
 
 .toolbar[data-position="bottom-right"] { right: 20px; bottom: 20px; }
+.toolbar[data-position="bottom-center"] { left: 50%; bottom: 20px; transform: translateX(-50%); }
 .toolbar[data-position="bottom-left"] { left: 20px; bottom: 20px; }
 .toolbar[data-position="top-right"] { right: 20px; top: 20px; }
+.toolbar[data-position="top-center"] { left: 50%; top: 20px; transform: translateX(-50%); }
 .toolbar[data-position="top-left"] { left: 20px; top: 20px; }
 
 .tool {
@@ -1455,7 +1506,7 @@ textarea {
       return markdown;
     }
     get position() {
-      return this.options.position || "bottom-right";
+      return this.options.position || "bottom-center";
     }
     get theme() {
       return this.options.theme || "system";
