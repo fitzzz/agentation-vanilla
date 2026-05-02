@@ -85,6 +85,23 @@ function truncate(value: string, max = 120): string {
   return value.length > max ? `${value.slice(0, max - 3)}...` : value;
 }
 
+function applyToolbarPosition(toolbar: HTMLElement, position: AnnotatorPosition): void {
+  toolbar.style.top = "";
+  toolbar.style.right = "";
+  toolbar.style.bottom = "";
+  toolbar.style.left = "";
+  toolbar.style.transform = "";
+
+  if (position.startsWith("bottom")) toolbar.style.bottom = "20px";
+  if (position.startsWith("top")) toolbar.style.top = "20px";
+  if (position.endsWith("left")) toolbar.style.left = "20px";
+  if (position.endsWith("right")) toolbar.style.right = "20px";
+  if (position.endsWith("center")) {
+    toolbar.style.left = "50%";
+    toolbar.style.transform = "translateX(-50%)";
+  }
+}
+
 export class OverlayRenderer {
   private host: HTMLDivElement | null = null;
   private shadow: ShadowRoot | null = null;
@@ -202,6 +219,7 @@ export class OverlayRenderer {
     if (!toolbar) return;
 
     toolbar.dataset.position = state.position;
+    applyToolbarPosition(toolbar, state.position);
     toolbar.innerHTML = `
       <button class="tool ${state.enabled ? "active" : ""}" type="button" data-action="toggle" aria-label="${
         state.enabled ? this.labels.annotateOff : this.labels.annotateOn

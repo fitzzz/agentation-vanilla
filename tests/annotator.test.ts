@@ -29,9 +29,12 @@ describe("createAnnotator", () => {
     const annotator = createAnnotator({ enabled: false }).mount();
     const host = document.querySelector<HTMLElement>("[data-ui-annotator-host]");
     expect(host).toBeTruthy();
-    expect(host!.shadowRoot!.querySelector<HTMLElement>(".toolbar")!.dataset.position).toBe(
-      "bottom-center",
-    );
+    const toolbar = host!.shadowRoot!.querySelector<HTMLElement>(".toolbar")!;
+    expect(toolbar.dataset.position).toBe("bottom-center");
+    expect(toolbar.style.bottom).toBe("20px");
+    expect(toolbar.style.left).toBe("50%");
+    expect(toolbar.style.transform).toBe("translateX(-50%)");
+    expect(toolbar.style.top).toBe("");
     annotator.unmount();
     expect(document.querySelector("[data-ui-annotator-host]")).toBeNull();
   });
@@ -39,9 +42,12 @@ describe("createAnnotator", () => {
   it("supports a top-center toolbar position", () => {
     const annotator = createAnnotator({ enabled: false, position: "top-center" }).mount();
     const host = document.querySelector<HTMLElement>("[data-ui-annotator-host]")!;
-    expect(host.shadowRoot!.querySelector<HTMLElement>(".toolbar")!.dataset.position).toBe(
-      "top-center",
-    );
+    const toolbar = host.shadowRoot!.querySelector<HTMLElement>(".toolbar")!;
+    expect(toolbar.dataset.position).toBe("top-center");
+    expect(toolbar.style.top).toBe("20px");
+    expect(toolbar.style.left).toBe("50%");
+    expect(toolbar.style.transform).toBe("translateX(-50%)");
+    expect(toolbar.style.bottom).toBe("");
     annotator.unmount();
   });
 

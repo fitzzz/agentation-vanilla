@@ -1002,6 +1002,21 @@ function escapeHtml(value) {
 function truncate(value, max = 120) {
   return value.length > max ? `${value.slice(0, max - 3)}...` : value;
 }
+function applyToolbarPosition(toolbar, position) {
+  toolbar.style.top = "";
+  toolbar.style.right = "";
+  toolbar.style.bottom = "";
+  toolbar.style.left = "";
+  toolbar.style.transform = "";
+  if (position.startsWith("bottom")) toolbar.style.bottom = "20px";
+  if (position.startsWith("top")) toolbar.style.top = "20px";
+  if (position.endsWith("left")) toolbar.style.left = "20px";
+  if (position.endsWith("right")) toolbar.style.right = "20px";
+  if (position.endsWith("center")) {
+    toolbar.style.left = "50%";
+    toolbar.style.transform = "translateX(-50%)";
+  }
+}
 var OverlayRenderer = class {
   constructor(labels, callbacks) {
     this.callbacks = callbacks;
@@ -1099,6 +1114,7 @@ var OverlayRenderer = class {
     const toolbar = this.shadow?.querySelector(".toolbar");
     if (!toolbar) return;
     toolbar.dataset.position = state.position;
+    applyToolbarPosition(toolbar, state.position);
     toolbar.innerHTML = `
       <button class="tool ${state.enabled ? "active" : ""}" type="button" data-action="toggle" aria-label="${state.enabled ? this.labels.annotateOff : this.labels.annotateOn}" aria-pressed="${state.enabled}" title="${state.enabled ? this.labels.annotateOff : this.labels.annotateOn}">${ICONS.cursor}</button>
       <button class="tool ${state.frozen ? "active" : ""}" type="button" data-action="freeze" aria-label="${state.frozen ? this.labels.freezeOff : this.labels.freezeOn}" aria-pressed="${state.frozen}" title="${state.frozen ? this.labels.freezeOff : this.labels.freezeOn}">${state.frozen ? ICONS.play : ICONS.pause}</button>
