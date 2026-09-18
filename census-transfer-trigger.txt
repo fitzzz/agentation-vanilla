@@ -1,0 +1,1 @@
+Trigger the temporary nationwide Census source transfer on 2026-09-18.
