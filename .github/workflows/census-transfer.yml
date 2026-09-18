@@ -1,0 +1,64 @@
+name: Census source transfer
+
+on:
+  push:
+    branches:
+      - automation/census-transfer-20260918
+    paths:
+      - .github/workflows/census-transfer.yml
+      - census-transfer-trigger.txt
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Download official Census sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p raw
+          base='https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData'
+          gaz='https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer'
+          rel='https://www2.census.gov/geo/docs/maps-data/data/rel2020/zcta520'
+          api='https://api.census.gov/data/2024/acs/acs5/groups'
+          urls=(
+            "$base/acsdt5y2024-b01003.dat"
+            "$base/acsdt5y2024-c16001.dat"
+            "$base/acsdt5y2024-b03001.dat"
+            "$api/B01003.json"
+            "$api/C16001.json"
+            "$api/B03001.json"
+            "$gaz/2024_Gaz_zcta_national.zip"
+            "$gaz/2024_Gaz_tracts_national.zip"
+            "$rel/tab20_zcta520_county20_natl.txt"
+            "$rel/tab20_zcta520_place20_natl.txt"
+            "$rel/tab20_zcta520_tract20_natl.txt"
+            'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2023/delineation-files/list1_2023.xlsx'
+          )
+          for url in "${urls[@]}"; do
+            file="raw/${url##*/}"
+            echo "Downloading $url"
+            curl --fail --location --retry 5 --retry-all-errors --connect-timeout 30 --max-time 1800 --output "$file" "$url"
+            test -s "$file"
+            sha256sum "$file" | tee -a raw/SHA256SUMS
+          done
+          python - <<'PY'
+          from pathlib import Path
+          for p in sorted(Path('raw').iterdir()):
+              print(p.name, p.stat().st_size)
+          PY
+          tar -C raw -czf census-2024-source-files.tar.gz .
+
+      - name: Upload source bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: census-2024-source-files
+          path: census-2024-source-files.tar.gz
+          compression-level: 0
+          retention-days: 3
+          if-no-files-found: error
